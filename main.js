@@ -33,7 +33,7 @@ let changeColorButton;
 // -----------------------------
 
 // --- Day/Night Cycle Feature ---
-const dayColor = { r: 112, g: 197, b: 206 };
+const dayColor = { r: 135, g: 206, b: 250 };
 const nightColor = { r: 25, g: 25, b: 112 };
 let currentColor = { ...dayColor };
 let targetColor = { ...dayColor };
@@ -145,26 +145,56 @@ function Pipe(x) {
     this.show = function() {
         // Pipe Body
         const pipeBodyGradient = ctx.createLinearGradient(this.x, 0, this.x + pipeWidth, 0);
-        pipeBodyGradient.addColorStop(0, '#a9a9a9');
-        pipeBodyGradient.addColorStop(0.5, '#696969');
-        pipeBodyGradient.addColorStop(1, '#a9a9a9');
+        pipeBodyGradient.addColorStop(0, '#555');
+        pipeBodyGradient.addColorStop(0.2, '#777');
+        pipeBodyGradient.addColorStop(0.5, '#999');
+        pipeBodyGradient.addColorStop(0.8, '#777');
+        pipeBodyGradient.addColorStop(1, '#555');
         ctx.fillStyle = pipeBodyGradient;
         ctx.fillRect(this.x, 0, pipeWidth, this.top);
         ctx.fillRect(this.x, this.bottom, pipeWidth, canvas.height - this.bottom - groundHeight);
 
         // Pipe Cap
         const pipeCapGradient = ctx.createLinearGradient(this.x, 0, this.x + pipeWidth, 0);
-        pipeCapGradient.addColorStop(0, '#696969');
-        pipeCapGradient.addColorStop(0.5, '#494949');
-        pipeCapGradient.addColorStop(1, '#696969');
+        pipeCapGradient.addColorStop(0, '#444');
+        pipeCapGradient.addColorStop(0.5, '#666');
+        pipeCapGradient.addColorStop(1, '#444');
         ctx.fillStyle = pipeCapGradient;
         ctx.fillRect(this.x - 5, this.top - 25, pipeWidth + 10, 25);
         ctx.fillRect(this.x - 5, this.bottom, pipeWidth + 10, 25);
 
         // Highlights
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.fillRect(this.x + 5, 0, 10, this.top);
-        ctx.fillRect(this.x + 5, this.bottom, 10, canvas.height - this.bottom - groundHeight);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(this.x, 0, pipeWidth * 0.1, this.top);
+        ctx.fillRect(this.x, this.bottom, pipeWidth * 0.1, canvas.height - this.bottom - groundHeight);
+        ctx.fillRect(this.x - 5, this.top - 25, (pipeWidth + 10) * 0.1, 25);
+        ctx.fillRect(this.x - 5, this.bottom, (pipeWidth + 10) * 0.1, 25);
+
+        // Shadows
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(this.x + pipeWidth * 0.9, 0, pipeWidth * 0.1, this.top);
+        ctx.fillRect(this.x + pipeWidth * 0.9, this.bottom, pipeWidth * 0.1, canvas.height - this.bottom - groundHeight);
+        ctx.fillRect(this.x - 5 + (pipeWidth + 10) * 0.9, this.top - 25, (pipeWidth + 10) * 0.1, 25);
+        ctx.fillRect(this.x - 5 + (pipeWidth + 10) * 0.9, this.bottom, (pipeWidth + 10) * 0.1, 25);
+
+        // Bolts
+        ctx.fillStyle = '#333';
+        for (let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.arc(this.x + 10 + i * 15, this.top - 12.5, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(this.x + 10 + i * 15, this.bottom + 12.5, 3, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        // Outline
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.x, 0, pipeWidth, this.top);
+        ctx.strokeRect(this.x, this.bottom, pipeWidth, canvas.height - this.bottom - groundHeight);
+        ctx.strokeRect(this.x - 5, this.top - 25, pipeWidth + 10, 25);
+        ctx.strokeRect(this.x - 5, this.bottom, pipeWidth + 10, 25);
     }
 
     this.update = function() {
@@ -187,18 +217,17 @@ function createScenery() {
     for (let i = 0; i < numClouds; i++) {
         const cloud = {
             x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height * 0.5,
+            y: Math.random() * canvas.height * 0.4,
             parts: [],
-            speed: Math.random() * 0.1 + 0.05 // Slower speed
+            speed: Math.random() * 0.1 + 0.05
         };
-        const numParts = Math.floor(Math.random() * 5) + 4; // More parts for complex clouds
+        const numParts = Math.floor(Math.random() * 4) + 3;
         for (let j = 0; j < numParts; j++) {
             cloud.parts.push({
-                x: (Math.random() - 0.5) * 80, // Wider spread
-                y: (Math.random() - 0.5) * 30, // Wider spread
-                radiusX: Math.random() * 40 + 20, // Ellipse radius
-                radiusY: Math.random() * 20 + 10, // Ellipse radius
-                opacity: Math.random() * 0.5 + 0.3
+                x: (Math.random() - 0.5) * 120,
+                y: (Math.random() - 0.5) * 40,
+                radius: Math.random() * 50 + 30,
+                animOffset: Math.random() * 2 * Math.PI
             });
         }
         clouds.push(cloud);
@@ -278,7 +307,7 @@ function draw() {
                 pipes.splice(i, 1);
             }
         }
-        grassOffset -= 0.5;
+        grassOffset -= 0.01;
         if (grassOffset <= -spikeWidth) {
             grassOffset = 0;
         }
@@ -321,7 +350,7 @@ function draw() {
 
     const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     const topColor = isDay ? `rgb(${Math.round(currentColor.r)}, ${Math.round(currentColor.g)}, ${Math.round(currentColor.b)})` : `rgb(${Math.round(currentColor.r)}, ${Math.round(currentColor.g)}, ${Math.round(currentColor.b)})`;
-    const bottomColor = isDay ? '#87CEEB' : '#4682B4';
+    const bottomColor = isDay ? '#87CEFA' : '#4682B4';
     skyGradient.addColorStop(0, topColor);
     skyGradient.addColorStop(1, bottomColor);
     ctx.fillStyle = skyGradient;
@@ -341,9 +370,19 @@ function draw() {
     ctx.globalAlpha = 1 - nightAlpha;
     clouds.forEach(cloud => {
         cloud.parts.forEach(part => {
-            ctx.fillStyle = `rgba(255, 255, 255, ${part.opacity})`;
+            const animRadius = part.radius + Math.sin(frame * 0.02 + part.animOffset) * 3;
+
+            const gradient = ctx.createRadialGradient(
+                cloud.x + part.x, cloud.y + part.y, 0,
+                cloud.x + part.x, cloud.y + part.y, animRadius
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+            ctx.fillStyle = gradient;
             ctx.beginPath();
-            ctx.ellipse(cloud.x + part.x, cloud.y + part.y, part.radiusX, part.radiusY, 0, 0, Math.PI * 2);
+            ctx.arc(cloud.x + part.x, cloud.y + part.y, animRadius, 0, 2 * Math.PI);
             ctx.fill();
         });
     });
@@ -359,33 +398,33 @@ function draw() {
     ctx.fillStyle = groundGradient;
     ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
 
-    // Spiky Grass
-    for (let i = grassOffset; i < canvas.width + spikeWidth; i += spikeWidth / 4) { // Increased density
-        const grassGradient = ctx.createLinearGradient(i, canvas.height - groundHeight, i, canvas.height - groundHeight - spikeHeight);
-        grassGradient.addColorStop(0, '#008000'); // Darker green
-        grassGradient.addColorStop(1, '#3CB371'); // Lighter green
-        ctx.fillStyle = grassGradient;
-        ctx.beginPath();
-        ctx.moveTo(i - spikeWidth / 2, canvas.height - groundHeight);
-        ctx.quadraticCurveTo(i, canvas.height - groundHeight - spikeHeight, i + spikeWidth / 2, canvas.height - groundHeight);
-        ctx.closePath();
-        ctx.fill();
-    }
+    // Dirt layers
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, canvas.height - groundHeight, canvas.width, 5);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, canvas.height - groundHeight + 15, canvas.width, 10);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, canvas.height - groundHeight + 35, canvas.width, 5);
 
     bird.show(frame);
 
     if (!gameStarted) {
         // Title
-        ctx.font = '80px "Arial Black", Gadget, sans-serif';
-        ctx.fillStyle = 'white';
+        ctx.font = '100px "Verdana", sans-serif';
+        const textGradient = ctx.createLinearGradient(0, 0, 0, 100);
+        textGradient.addColorStop(0, '#fff');
+        textGradient.addColorStop(1, '#ddd');
+        ctx.fillStyle = textGradient;
         ctx.textAlign = 'center';
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 3;
-        ctx.strokeText('Copy Bird', canvas.width / 2, canvas.height / 4);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
         ctx.fillText('Copy Bird', canvas.width / 2, canvas.height / 4);
+        ctx.shadowColor = 'transparent'; // Reset shadow for other elements
 
         ctx.font = '25px Arial';
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = '#ADD8E6';
         ctx.fillText('Click or Press Space to Start', canvas.width / 2, canvas.height / 3);
         ctx.font = '20px Arial';
         ctx.textAlign = 'right';
