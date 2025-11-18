@@ -37,7 +37,7 @@ const dayColor = { r: 112, g: 197, b: 206 };
 const nightColor = { r: 25, g: 25, b: 112 };
 let currentColor = { ...dayColor };
 let targetColor = { ...dayColor };
-const colorTransitionSpeed = 0.01;
+const colorTransitionSpeed = 0.002;
 let scoreForNextCycle = 10;
 let isDay = true;
 // -----------------------------
@@ -64,30 +64,45 @@ function Bird() {
         ctx.translate(birdX, this.y);
         ctx.rotate(this.rotation);
 
-        ctx.fillStyle = theme.body;
+        // Body with 3D effect
+        const bodyGradient = ctx.createRadialGradient(0, 0, birdRadius / 4, 0, 0, birdRadius);
+        bodyGradient.addColorStop(0, theme.wing);
+        bodyGradient.addColorStop(1, theme.body);
+
+        ctx.fillStyle = bodyGradient;
         ctx.beginPath();
         ctx.arc(0, 0, birdRadius, 0, 2 * Math.PI);
         ctx.fill();
 
-        const wingFlapSpeed = 10;
-        const wingAngle = Math.sin(frame / wingFlapSpeed) * (Math.PI / 6);
+        // Wing with flapping animation
+        const wingFlapSpeed = 8;
+        const wingAngle = Math.sin(frame / wingFlapSpeed) * (Math.PI / 8) - Math.PI / 16;
         ctx.fillStyle = theme.wing;
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, birdRadius, wingAngle, Math.PI - wingAngle, false);
+        ctx.moveTo(-birdRadius * 0.7, 0); // Adjusted starting point
+        ctx.quadraticCurveTo(-birdRadius * 0.5, -birdRadius * 1.2, 0, -birdRadius * 0.7); // Top curve
+        ctx.quadraticCurveTo(birdRadius * 0.5, -birdRadius * 0.5, birdRadius * 0.7, 0); // Outer curve
+        ctx.quadraticCurveTo(birdRadius * 0.5, birdRadius * 0.5, 0, birdRadius * 0.7); // Bottom curve
+        ctx.quadraticCurveTo(-birdRadius * 0.5, birdRadius * 1.2, -birdRadius * 0.7, 0); // Inner curve
         ctx.closePath();
         ctx.fill();
 
+        // Eye
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(birdRadius * 0.4, -birdRadius * 0.3, 5, 0, 2 * Math.PI);
+        ctx.fill();
         ctx.fillStyle = 'black';
         ctx.beginPath();
-        ctx.arc(birdRadius / 2, -birdRadius / 3, 3, 0, 2 * Math.PI);
+        ctx.arc(birdRadius * 0.4 + 2, -birdRadius * 0.3, 2, 0, 2 * Math.PI);
         ctx.fill();
 
+        // Beak
         ctx.fillStyle = theme.beak;
         ctx.beginPath();
-        ctx.moveTo(birdRadius - 5, 0);
-        ctx.lineTo(birdRadius + 10, -5);
-        ctx.lineTo(birdRadius + 10, 5);
+        ctx.moveTo(birdRadius * 0.8, 0);
+        ctx.lineTo(birdRadius + 10, -2);
+        ctx.lineTo(birdRadius + 10, 2);
         ctx.closePath();
         ctx.fill();
 
@@ -128,17 +143,28 @@ function Pipe(x) {
     this.passed = false;
 
     this.show = function() {
-        ctx.fillStyle = '#008000';
+        // Pipe Body
+        const pipeBodyGradient = ctx.createLinearGradient(this.x, 0, this.x + pipeWidth, 0);
+        pipeBodyGradient.addColorStop(0, '#a9a9a9');
+        pipeBodyGradient.addColorStop(0.5, '#696969');
+        pipeBodyGradient.addColorStop(1, '#a9a9a9');
+        ctx.fillStyle = pipeBodyGradient;
         ctx.fillRect(this.x, 0, pipeWidth, this.top);
         ctx.fillRect(this.x, this.bottom, pipeWidth, canvas.height - this.bottom - groundHeight);
-        ctx.fillStyle = '#006400';
-        ctx.fillRect(this.x, 0, 10, this.top);
-        ctx.fillRect(this.x + pipeWidth - 10, 0, 10, this.top);
-        ctx.fillRect(this.x, this.bottom, 10, canvas.height - this.bottom - groundHeight);
-        ctx.fillRect(this.x + pipeWidth - 10, this.bottom, 10, canvas.height - this.bottom - groundHeight);
-        ctx.fillStyle = '#32CD32';
-        ctx.fillRect(this.x + 10, this.top - 15, pipeWidth - 20, 15);
-        ctx.fillRect(this.x + 10, this.bottom, pipeWidth - 20, 15);
+
+        // Pipe Cap
+        const pipeCapGradient = ctx.createLinearGradient(this.x, 0, this.x + pipeWidth, 0);
+        pipeCapGradient.addColorStop(0, '#696969');
+        pipeCapGradient.addColorStop(0.5, '#494949');
+        pipeCapGradient.addColorStop(1, '#696969');
+        ctx.fillStyle = pipeCapGradient;
+        ctx.fillRect(this.x - 5, this.top - 25, pipeWidth + 10, 25);
+        ctx.fillRect(this.x - 5, this.bottom, pipeWidth + 10, 25);
+
+        // Highlights
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fillRect(this.x + 5, 0, 10, this.top);
+        ctx.fillRect(this.x + 5, this.bottom, 10, canvas.height - this.bottom - groundHeight);
     }
 
     this.update = function() {
@@ -159,11 +185,23 @@ function createScenery() {
     clouds = [];
     stars = [];
     for (let i = 0; i < numClouds; i++) {
-        clouds.push({
+        const cloud = {
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height * 0.5,
-            size: Math.random() * 20 + 15
-        });
+            parts: [],
+            speed: Math.random() * 0.1 + 0.05 // Slower speed
+        };
+        const numParts = Math.floor(Math.random() * 5) + 4; // More parts for complex clouds
+        for (let j = 0; j < numParts; j++) {
+            cloud.parts.push({
+                x: (Math.random() - 0.5) * 80, // Wider spread
+                y: (Math.random() - 0.5) * 30, // Wider spread
+                radiusX: Math.random() * 40 + 20, // Ellipse radius
+                radiusY: Math.random() * 20 + 10, // Ellipse radius
+                opacity: Math.random() * 0.5 + 0.3
+            });
+        }
+        clouds.push(cloud);
     }
     for (let i = 0; i < numStars; i++) {
         stars.push({
@@ -214,6 +252,8 @@ function setup() {
 }
 
 function draw() {
+    const spikeWidth = 10;
+    const spikeHeight = 25;
     // --- Update Logic ---
     if (gameStarted && !gameOver && !isPaused) {
         bird.update();
@@ -238,8 +278,8 @@ function draw() {
                 pipes.splice(i, 1);
             }
         }
-        grassOffset -= 1.5;
-        if (grassOffset <= -7) {
+        grassOffset -= 0.5;
+        if (grassOffset <= -spikeWidth) {
             grassOffset = 0;
         }
         
@@ -255,9 +295,13 @@ function draw() {
 
         // Update scenery
         clouds.forEach(cloud => {
-            cloud.x -= 0.2;
-            if (cloud.x + cloud.size * 2 < 0) {
-                cloud.x = canvas.width + cloud.size * 2;
+            cloud.x -= cloud.speed;
+            let rightmostPart = 0;
+            cloud.parts.forEach(part => {
+                rightmostPart = Math.max(rightmostPart, part.x + part.size);
+            });
+            if (cloud.x + rightmostPart < 0) {
+                cloud.x = canvas.width + rightmostPart;
                 cloud.y = Math.random() * canvas.height * 0.5;
             }
         });
@@ -274,7 +318,13 @@ function draw() {
 
     // --- Drawing Logic ---
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = `rgb(${Math.round(currentColor.r)}, ${Math.round(currentColor.g)}, ${Math.round(currentColor.b)})`;
+
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    const topColor = isDay ? `rgb(${Math.round(currentColor.r)}, ${Math.round(currentColor.g)}, ${Math.round(currentColor.b)})` : `rgb(${Math.round(currentColor.r)}, ${Math.round(currentColor.g)}, ${Math.round(currentColor.b)})`;
+    const bottomColor = isDay ? '#87CEEB' : '#4682B4';
+    skyGradient.addColorStop(0, topColor);
+    skyGradient.addColorStop(1, bottomColor);
+    ctx.fillStyle = skyGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw Stars and Clouds with fade
@@ -284,18 +334,33 @@ function draw() {
     ctx.fillStyle = 'white';
     stars.forEach(star => {
         ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, 2 * Math.PI);
+        ctx.arc(star.x, star.y, star.size * (Math.sin(frame / 10 + star.x) * 0.5 + 0.5), 0, 2 * Math.PI);
         ctx.fill();
     });
     
     ctx.globalAlpha = 1 - nightAlpha;
-    ctx.fillStyle = 'white';
     clouds.forEach(cloud => {
-        ctx.beginPath();
-        ctx.arc(cloud.x, cloud.y, cloud.size, 0, 2 * Math.PI);
-        ctx.arc(cloud.x + cloud.size * 0.8, cloud.y, cloud.size * 0.8, 0, 2 * Math.PI);
-        ctx.arc(cloud.x - cloud.size * 0.8, cloud.y, cloud.size * 0.8, 0, 2 * Math.PI);
-        ctx.fill();
+        // Cloud Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        cloud.parts.forEach(part => {
+            ctx.beginPath();
+            ctx.ellipse(cloud.x + part.x + 5, cloud.y + part.y + 5, part.radiusX, part.radiusY, 0, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        cloud.parts.forEach(part => {
+            const gradient = ctx.createRadialGradient(
+                cloud.x + part.x, cloud.y + part.y, Math.min(part.radiusX, part.radiusY) / 2,
+                cloud.x + part.x, cloud.y + part.y, Math.max(part.radiusX, part.radiusY)
+            );
+            gradient.addColorStop(0, `rgba(255, 255, 255, ${part.opacity})`);
+            gradient.addColorStop(1, `rgba(255, 255, 255, ${part.opacity * 0.7})`);
+            ctx.fillStyle = gradient;
+
+            ctx.beginPath();
+            ctx.ellipse(cloud.x + part.x, cloud.y + part.y, part.radiusX, part.radiusY, 0, 0, Math.PI * 2);
+            ctx.fill();
+        });
     });
     ctx.globalAlpha = 1.0;
 
@@ -303,26 +368,39 @@ function draw() {
         pipes[i].show();
     }
 
-    ctx.fillStyle = '#D2B48C';
+    const groundGradient = ctx.createLinearGradient(0, canvas.height - groundHeight, 0, canvas.height);
+    groundGradient.addColorStop(0, '#6B4F35');
+    groundGradient.addColorStop(1, '#A07855');
+    ctx.fillStyle = groundGradient;
     ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
-    const grassBladeWidth = 5;
-    const grassBladeHeight = 15;
-    ctx.fillStyle = '#7CFC00';
-    for (let i = grassOffset; i < canvas.width; i += grassBladeWidth + 2) {
-        ctx.fillRect(i, canvas.height - groundHeight - grassBladeHeight, grassBladeWidth, grassBladeHeight);
+
+    // Spiky Grass
+    for (let i = grassOffset; i < canvas.width + spikeWidth; i += spikeWidth / 4) { // Increased density
+        const grassGradient = ctx.createLinearGradient(i, canvas.height - groundHeight, i, canvas.height - groundHeight - spikeHeight);
+        grassGradient.addColorStop(0, '#008000'); // Darker green
+        grassGradient.addColorStop(1, '#3CB371'); // Lighter green
+        ctx.fillStyle = grassGradient;
+        ctx.beginPath();
+        ctx.moveTo(i - spikeWidth / 2, canvas.height - groundHeight);
+        ctx.quadraticCurveTo(i, canvas.height - groundHeight - spikeHeight, i + spikeWidth / 2, canvas.height - groundHeight);
+        ctx.closePath();
+        ctx.fill();
     }
 
-    if (!gameStarted) {
-        bird.y = (canvas.height / 2 - 50) + Math.sin(frame / 10) * 5;
-        bird.rotation = 0;
-    }
     bird.show(frame);
 
-    // --- Overlay and UI Logic ---
     if (!gameStarted) {
+        // Title
+        ctx.font = '80px "Arial Black", Gadget, sans-serif';
         ctx.fillStyle = 'white';
-        ctx.font = '25px Arial';
         ctx.textAlign = 'center';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.strokeText('Copy Bird', canvas.width / 2, canvas.height / 4);
+        ctx.fillText('Copy Bird', canvas.width / 2, canvas.height / 4);
+
+        ctx.font = '25px Arial';
+        ctx.fillStyle = 'white';
         ctx.fillText('Click or Press Space to Start', canvas.width / 2, canvas.height / 3);
         ctx.font = '20px Arial';
         ctx.textAlign = 'right';
@@ -337,13 +415,13 @@ function draw() {
     }
 
     if (gameStarted && !isPaused) {
+        ctx.font = '50px "Arial Black", Gadget, sans-serif';
         ctx.fillStyle = 'white';
-        ctx.font = '30px Arial';
+        ctx.textAlign = 'center';
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
-        ctx.textAlign = 'left';
-        ctx.strokeText('Score: ' + score, canvas.width * 0.05, canvas.height * 0.05);
-        ctx.fillText('Score: ' + score, canvas.width * 0.05, canvas.height * 0.05);
+        ctx.strokeText(score, canvas.width / 2, 80);
+        ctx.fillText(score, canvas.width / 2, 80);
     }
 
     if (isPaused) {
@@ -365,16 +443,20 @@ function draw() {
                 highScore = score;
                 localStorage.setItem('copyBirdHighScore', highScore);
             }
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
-            ctx.font = '40px Arial';
+            ctx.font = '60px "Arial Black", Gadget, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 50);
-            ctx.font = '20px Arial';
+            ctx.strokeText('Game Over', canvas.width / 2, canvas.height / 2 - 100);
+            ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 100);
+
+            ctx.font = '30px Arial';
             ctx.fillText('Score: ' + score, canvas.width / 2, canvas.height / 2);
-            ctx.fillText('High Score: ' + highScore, canvas.width / 2, canvas.height / 2 + 30);
-            ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 80);
+            ctx.fillText('High Score: ' + highScore, canvas.width / 2, canvas.height / 2 + 50);
+
+            ctx.font = '20px Arial';
+            ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 120);
             return;
         }
     }
