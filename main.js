@@ -340,23 +340,8 @@ function draw() {
     
     ctx.globalAlpha = 1 - nightAlpha;
     clouds.forEach(cloud => {
-        // Cloud Shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
         cloud.parts.forEach(part => {
-            ctx.beginPath();
-            ctx.ellipse(cloud.x + part.x + 5, cloud.y + part.y + 5, part.radiusX, part.radiusY, 0, 0, Math.PI * 2);
-            ctx.fill();
-        });
-
-        cloud.parts.forEach(part => {
-            const gradient = ctx.createRadialGradient(
-                cloud.x + part.x, cloud.y + part.y, Math.min(part.radiusX, part.radiusY) / 2,
-                cloud.x + part.x, cloud.y + part.y, Math.max(part.radiusX, part.radiusY)
-            );
-            gradient.addColorStop(0, `rgba(255, 255, 255, ${part.opacity})`);
-            gradient.addColorStop(1, `rgba(255, 255, 255, ${part.opacity * 0.7})`);
-            ctx.fillStyle = gradient;
-
+            ctx.fillStyle = `rgba(255, 255, 255, ${part.opacity})`;
             ctx.beginPath();
             ctx.ellipse(cloud.x + part.x, cloud.y + part.y, part.radiusX, part.radiusY, 0, 0, Math.PI * 2);
             ctx.fill();
