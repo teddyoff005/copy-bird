@@ -37,7 +37,7 @@ const dayColor = { r: 112, g: 197, b: 206 };
 const nightColor = { r: 25, g: 25, b: 112 };
 let currentColor = { ...dayColor };
 let targetColor = { ...dayColor };
-const colorTransitionSpeed = 0.02;
+const colorTransitionSpeed = 0.01;
 let scoreForNextCycle = 10;
 let isDay = true;
 // -----------------------------
