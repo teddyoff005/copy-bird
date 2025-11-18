@@ -184,25 +184,24 @@ function Pipe(x) {
 function createScenery() {
     clouds = [];
     stars = [];
-    for (let i = 0; i < numClouds; i++) {
-        const cloud = {
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height * 0.5,
-            parts: [],
-            speed: Math.random() * 0.1 + 0.05 // Slower speed
-        };
-        const numParts = Math.floor(Math.random() * 5) + 4; // More parts for complex clouds
-        for (let j = 0; j < numParts; j++) {
-            cloud.parts.push({
-                x: (Math.random() - 0.5) * 80, // Wider spread
-                y: (Math.random() - 0.5) * 30, // Wider spread
-                radiusX: Math.random() * 40 + 20, // Ellipse radius
-                radiusY: Math.random() * 20 + 10, // Ellipse radius
-                opacity: Math.random() * 0.5 + 0.3
-            });
-        }
-        clouds.push(cloud);
+    const cloud = {
+        x: canvas.width / 2,
+        y: canvas.height * 0.2,
+        parts: [],
+        speed: 0.1
+    };
+    const numParts = 50;
+    for (let j = 0; j < numParts; j++) {
+        cloud.parts.push({
+            x: (Math.random() - 0.5) * canvas.width * 0.8,
+            y: (Math.random() - 0.5) * 100,
+            radiusX: Math.random() * 80 + 40,
+            radiusY: Math.random() * 40 + 20,
+            opacity: Math.random() * 0.3 + 0.2
+        });
     }
+    clouds.push(cloud);
+
     for (let i = 0; i < numStars; i++) {
         stars.push({
             x: Math.random() * canvas.width,
@@ -298,11 +297,10 @@ function draw() {
             cloud.x -= cloud.speed;
             let rightmostPart = 0;
             cloud.parts.forEach(part => {
-                rightmostPart = Math.max(rightmostPart, part.x + part.size);
+                rightmostPart = Math.max(rightmostPart, part.x + part.radiusX);
             });
             if (cloud.x + rightmostPart < 0) {
                 cloud.x = canvas.width + rightmostPart;
-                cloud.y = Math.random() * canvas.height * 0.5;
             }
         });
         stars.forEach(star => {
